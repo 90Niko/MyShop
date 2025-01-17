@@ -9,7 +9,7 @@ namespace MyShop.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly MyShopDbContext _context;
+        private readonly MyShopDbContext  _context;
 
         public ProductController(MyShopDbContext context)
         {
