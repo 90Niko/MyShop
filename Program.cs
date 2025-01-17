@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyShop.Data;
+using MyShop.Data.Models;
 using System.Text;
 
 namespace MyShop
@@ -20,10 +21,24 @@ namespace MyShop
             builder.Services.AddDbContext<MyShopDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+            builder.Services.Configure<IdentityOptions>(options =>
+            {
+                options.User.RequireUniqueEmail = true; // Ensure email is unique
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"; // Adjust allowed characters
+            });
+
+            builder.Services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<MyShopDbContext>()
                 .AddDefaultTokenProviders();
-
+            builder.Services.Configure<IdentityOptions>(options =>
+            {
+                // Password settings
+                options.Password.RequireDigit = false; // Requires at least one number
+                options.Password.RequireLowercase = false; // Requires at least one lowercase letter
+                options.Password.RequireUppercase = false; // Requires at least one uppercase letter
+                options.Password.RequireNonAlphanumeric = false; // Disable non-alphanumeric character requirement
+                options.Password.RequiredLength = 6; // Minimum password length
+            });
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

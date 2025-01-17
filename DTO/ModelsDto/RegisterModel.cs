@@ -2,7 +2,7 @@
 
 namespace MyShop.DTO.ModelsDto
 {
-    public class RegisterModelcs
+    public class RegisterModel
     {
         [Required]
         public string FirstName { get; set; } = string.Empty;
