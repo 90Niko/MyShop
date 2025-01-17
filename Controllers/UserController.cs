@@ -17,7 +17,7 @@ namespace MyShop.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        public async Task<IActionResult> Register(RegisterModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -29,6 +29,7 @@ namespace MyShop.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Male = model.Male,
+                PasswordHash = model.Password,
                 Age = model.Age
             };
 
@@ -41,5 +42,23 @@ namespace MyShop.Controllers
 
             return BadRequest(result.Errors);
         }
+
+        [HttpPost("login")]
+
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return BadRequest(new { Message = "Invalid email or password" });
+            }
+            var result = await _userManager.CheckPasswordAsync(user, model.Password);
+            if (result)
+            {
+                return Ok(new { Message = "User logged in successfully!" });
+            }
+            return BadRequest(new { Message = "Invalid email or password" });
+        }
+
     }
 }
