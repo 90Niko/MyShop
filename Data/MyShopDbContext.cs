@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MyShop.Data.Models;
 
 namespace MyShop.Data
 {
@@ -8,6 +9,8 @@ namespace MyShop.Data
             : base(options)
         {
         }
-        public DbSet<WeatherForecast> WeatherForecasts { get; set; }
+        public DbSet<WeatherForecast> WeatherForecasts { get; set; } = null!;
+        public DbSet<Product> Products { get; set; }= null!;
+        public DbSet<Category> Categories { get; set; } = null!;
     }
 }
