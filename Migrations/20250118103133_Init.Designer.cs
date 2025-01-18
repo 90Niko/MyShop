@@ -12,8 +12,8 @@ using MyShop.Data;
 namespace MyShop.Migrations
 {
     [DbContext(typeof(MyShopDbContext))]
-    [Migration("20250117135928_init")]
-    partial class init
+    [Migration("20250118103133_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -162,18 +162,23 @@ namespace MyShop.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasComment("PK of the Category");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
                         .HasComment("Name of Category");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", t =>
+                        {
+                            t.HasComment("Category of the Product");
+                        });
                 });
 
             modelBuilder.Entity("MyShop.Data.Models.Product", b =>
@@ -195,11 +200,14 @@ namespace MyShop.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasComment("Description of Product");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
                         .HasComment("Name of Product");
 
                     b.Property<decimal>("Price")
@@ -225,7 +233,8 @@ namespace MyShop.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Age")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasComment("Age of the User");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -240,21 +249,24 @@ namespace MyShop.Migrations
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("First name of the User");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("Gender of the User");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasComment("Last name of the User");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Male")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -293,7 +305,10 @@ namespace MyShop.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", null, t =>
+                        {
+                            t.HasComment("User");
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace MyShop.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,10 +30,10 @@ namespace MyShop.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Male = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Age = table.Column<int>(type: "int", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "First name of the User"),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Last name of the User"),
+                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Gender of the User"),
+                    Age = table.Column<int>(type: "int", nullable: false, comment: "Age of the User"),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -52,20 +52,22 @@ namespace MyShop.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
-                });
+                },
+                comment: "User");
 
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false, comment: "PK of the Category")
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Name of Category")
+                    Name = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, comment: "Name of Category")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
-                });
+                },
+                comment: "Category of the Product");
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
@@ -179,11 +181,11 @@ namespace MyShop.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false, comment: "PK of Product")
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Name of Product"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false, comment: "Name of Product"),
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false, comment: "Price of Product"),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false, comment: "This is the date the product was created"),
                     CategoryId = table.Column<int>(type: "int", nullable: false, comment: "Product Category identifier"),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false, comment: "Description of Product")
                 },
                 constraints: table =>
                 {

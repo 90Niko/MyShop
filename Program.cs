@@ -33,9 +33,9 @@ namespace MyShop
             builder.Services.Configure<IdentityOptions>(options =>
             {
                 // Password settings
-                options.Password.RequireDigit = false; // Requires at least one number
+                options.Password.RequireDigit = true; // Requires at least one number
                 options.Password.RequireLowercase = false; // Requires at least one lowercase letter
-                options.Password.RequireUppercase = false; // Requires at least one uppercase letter
+                options.Password.RequireUppercase = true; // Requires at least one uppercase letter
                 options.Password.RequireNonAlphanumeric = false; // Disable non-alphanumeric character requirement
                 options.Password.RequiredLength = 6; // Minimum password length
             });

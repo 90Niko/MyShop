@@ -17,7 +17,7 @@ namespace MyShop.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterModel model)
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -28,7 +28,7 @@ namespace MyShop.Controllers
                 Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                Male = model.Male,
+                Gender = model.Male,
                 PasswordHash = model.Password,
                 Age = model.Age
             };

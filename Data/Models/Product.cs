@@ -8,11 +8,12 @@ namespace MyShop.Data.Models
     public class Product
     {
         [Key]
-        [Comment("PK of Product" )]
+        [Comment("PK of Product")]
         public int Id { get; set; }
 
         [Required]
-        [Comment( "Name of Product")]
+        [MaxLength(Constants.Constants.ProductNameMax)]
+        [Comment("Name of Product")]
         public string Name { get; set; } = string.Empty;
 
         [Required]
@@ -30,8 +31,11 @@ namespace MyShop.Data.Models
 
         [Required]
         [ForeignKey("CategoryId")]
-        public Category Category { get; set; }=null!;
+        public Category Category { get; set; } = null!;
 
-        public string Description { get; set; }= string.Empty;
+        [Required]
+        [MaxLength(Constants.Constants.ProductDescriptionMax)]
+        [Comment("Description of Product")]
+        public string Description { get; set; } = string.Empty;
     }
 }
