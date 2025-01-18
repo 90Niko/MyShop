@@ -4,72 +4,146 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyShop.Data;
 using MyShop.Data.Models;
+using MyShop.Data.SeedDb;
 using System.Text;
+using System.Text.Json;
 
 namespace MyShop
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var connectionString = builder
-               .Configuration
-               .GetConnectionString("DefaultConnection");
+            // Get the connection string
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+            // Configure Entity Framework and Identity
             builder.Services.AddDbContext<MyShopDbContext>(options =>
                 options.UseSqlServer(connectionString));
-
-            builder.Services.Configure<IdentityOptions>(options =>
-            {
-                options.User.RequireUniqueEmail = true; // Ensure email is unique
-                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"; // Adjust allowed characters
-            });
 
             builder.Services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<MyShopDbContext>()
                 .AddDefaultTokenProviders();
+
             builder.Services.Configure<IdentityOptions>(options =>
             {
+                // User settings
+                options.User.RequireUniqueEmail = true;
+
                 // Password settings
-                options.Password.RequireDigit = true; // Requires at least one number
-                options.Password.RequireLowercase = false; // Requires at least one lowercase letter
-                options.Password.RequireUppercase = true; // Requires at least one uppercase letter
-                options.Password.RequireNonAlphanumeric = false; // Disable non-alphanumeric character requirement
-                options.Password.RequiredLength = 6; // Minimum password length
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
             });
+
+            // Configure JWT Authentication
+            var key = builder.Configuration["Jwt:Key"];
+            var issuer = builder.Configuration["Jwt:Issuer"];
+            var audience = builder.Configuration["Jwt:Audience"];
+
+            if (string.IsNullOrEmpty(key) || key.Length < 10)
+            {
+                throw new Exception("JWT key must be at least 32 characters long.");
+            }
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(options =>
-             {
-                 options.TokenValidationParameters = new TokenValidationParameters
-                 {
-                     ValidateIssuer = true,
-                     ValidateAudience = true,
-                     ValidateLifetime = true,
-                     ValidateIssuerSigningKey = true,
-                     ValidIssuer = "yourdomain.com",
-                     ValidAudience = "yourdomain.com",
-                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSecretKey"))
-                 };
-             });
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
 
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = context =>
+        {
+            // Prevent default behavior of redirecting on unauthorized
+            context.HandleResponse();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+            var result = JsonSerializer.Serialize(new { message = "Unauthorized" });
+            return context.Response.WriteAsync(result);
+        }
+    };
+});
+
+            // Configure Authorization
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+            });
+
+            // Add controllers and Swagger
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
+                    Name = "Authorization",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
+
             builder.Services.AddCors();
 
             var app = builder.Build();
-            app.UseCors(policy => policy.AllowAnyOrigin()
-                 .AllowAnyMethod()
-                 .AllowAnyHeader());
 
-            // Configure the HTTP request pipeline.
+            using (var scope = app.Services.CreateScope())
+            {
+                var serviceProvider = scope.ServiceProvider;
+                var dbContext = serviceProvider.GetRequiredService<MyShopDbContext>();
+
+                // Apply migrations
+                await dbContext.Database.MigrateAsync();
+
+                // Seed the database with roles and users
+                await SeedData.SeedAsync(serviceProvider, dbContext);
+            }
+
+            // Configure Middleware
+            app.UseHttpsRedirection();
+
+            app.UseCors(policy => policy.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -77,13 +151,7 @@ namespace MyShop
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
                 });
-
             }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
 
             app.MapControllers();
 
