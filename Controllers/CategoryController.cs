@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyShop.Data;
@@ -12,9 +13,11 @@ namespace MyShop.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly MyShopDbContext _context;
-        public CategoryController(MyShopDbContext context)
+        private readonly ILogger<CategoryController> _logger;
+        public CategoryController(MyShopDbContext context, ILogger<CategoryController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -46,7 +49,7 @@ namespace MyShop.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("getAll")]
         public async Task<ActionResult<IEnumerable<object>>> GetCategories()
         {
             try
@@ -93,6 +96,52 @@ namespace MyShop.Controllers
                 //_logger.LogError(ex, "Error occurred while deleting category with ID {Id}", id);
 
                 return StatusCode(500, new { Message = $"Internal server error: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("edit/{id}")]
+        public async Task<IActionResult> EditCategory(int id)
+        {
+            try
+            {
+                var category = await _context.Categories.FindAsync(id);
+                if (category == null)
+                {
+                    return NotFound(new { Message = "Category not found in the database." });
+                }
+                return Ok(category);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching the category.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> Edit(int id, [FromBody] CategoryModel category)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var cat = await _context.Categories.FindAsync(id);
+                if (cat == null)
+                {
+                    return NotFound(new { Message = "Category not found in the database." });
+                }
+
+                // Update category
+                cat.Name = category.Name;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Category updated successfully!", Category = cat });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while updating the category.");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
     }
