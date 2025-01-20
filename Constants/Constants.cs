@@ -25,5 +25,7 @@
 
         public const int UserAgeMin = 14;
         public const int UserAgeMax = 100;
+
+        public const string EmailRegex = @"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$";
     }
 }
