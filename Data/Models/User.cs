@@ -10,10 +10,12 @@ namespace MyShop.Data.Models
     {
         
         [Required]
+        [MaxLength(Constants.Constants.UserFirstNameMax)]
         [Comment("First name of the User")]
         public string FirstName { get; set; }= string.Empty;
 
         [Required]
+        [MaxLength(Constants.Constants.UserLastNameMax)]
         [Comment("Last name of the User")]
         public string LastName { get; set; } = string.Empty;
 

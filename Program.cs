@@ -128,7 +128,7 @@ namespace MyShop
                 var dbContext = serviceProvider.GetRequiredService<MyShopDbContext>();
 
                 // Apply migrations
-                await dbContext.Database.MigrateAsync();
+              
 
                 // Seed the database with roles and users
                 await SeedData.SeedAsync(serviceProvider, dbContext);
