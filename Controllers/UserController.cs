@@ -37,6 +37,8 @@ namespace MyShop.Controllers
 
             if (result.Succeeded)
             {
+                // Assign the default "User" role to the newly registered user
+                await _userManager.AddToRoleAsync(user, "User");
                 return Ok(new { Message = "User registered successfully!" });
             }
 
@@ -44,20 +46,26 @@ namespace MyShop.Controllers
         }
 
         [HttpPost("login")]
-
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
+            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                return BadRequest(new { Message = "Invalid email or password" });
+                return Unauthorized(new { Message = "Invalid email or password" });
             }
-            var result = await _userManager.CheckPasswordAsync(user, model.Password);
-            if (result)
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return Ok(new
             {
-                return Ok(new { Message = "User logged in successfully!" });
-            }
-            return BadRequest(new { Message = "Invalid email or password" });
+                Message = "User logged in successfully!",
+                UserId = user.Id,
+                Email = user.Email,
+                Roles = roles
+            });
         }
 
     }

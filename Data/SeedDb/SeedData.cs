@@ -16,6 +16,11 @@ namespace MyShop.Data.SeedDb
             {
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
             }
+            if (!await roleManager.RoleExistsAsync("User"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
 
             // Create an admin user
             var adminUser = new User
@@ -34,6 +39,7 @@ namespace MyShop.Data.SeedDb
                 var result = await userManager.CreateAsync(adminUser, adminPassword);
                 if (result.Succeeded)
                 {
+
                     await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
             }

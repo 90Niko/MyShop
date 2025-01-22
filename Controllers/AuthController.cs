@@ -33,17 +33,34 @@ namespace MyShop.Controllers
                 return Unauthorized(new { message = "Invalid credentials" });
             }
 
-            var token = GenerateJwtToken(user);
-            return Ok(new { token });
+            // Get user roles
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Generate token
+            var token = GenerateJwtToken(user, roles);
+
+            return Ok(new
+            {
+                token,
+                role = roles.FirstOrDefault() // Assuming a user has a single role
+            });
         }
 
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(User user, IList<string> roles)
         {
-            var claims = new[]
+            var claims = new List<Claim>
             {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Name, user.UserName),
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
+
+            // Add roles to claims
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -60,14 +77,26 @@ namespace MyShop.Controllers
 
         [HttpGet("user")]
         [Authorize]
-        public IActionResult GetCurrentUser()
+        public async Task<IActionResult> GetCurrentUser()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var name = User.FindFirstValue(ClaimTypes.Name);
+            var user = await _userManager.FindByIdAsync(userId);
 
-            return Ok(new { userId, email });
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            // Get user roles
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return Ok(new
+            {
+                userId = user.Id,
+                email = user.Email,
+                name = user.UserName,
+                roles
+            });
         }
     }
-
 }
