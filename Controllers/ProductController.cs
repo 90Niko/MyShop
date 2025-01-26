@@ -16,7 +16,7 @@ namespace MyShop.Controllers
             _context = context;
         }
 
-        [HttpGet]
+        [HttpGet("getAll")]
         public async Task<ActionResult<IEnumerable<object>>> GetProducts()
         {
             try

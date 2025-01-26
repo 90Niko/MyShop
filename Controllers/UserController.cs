@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyShop.Data.Models;
 using MyShop.DTO.ModelsDto;
 
@@ -67,6 +68,30 @@ namespace MyShop.Controllers
                 Roles = roles
             });
         }
+        [HttpGet("getAll")]
+        public async Task<ActionResult<IEnumerable<object>>> GetUsers()
+        {
+            try
+            {
 
+                var users = await _userManager.Users
+                    .Select(u => new
+                    {
+                        u.Id,
+                        u.FirstName,
+                        u.LastName,
+                        u.Email,
+                    }).ToListAsync();
+
+
+                if (users == null || users.Count == 0) { return NotFound("No users found in the database."); }
+
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
