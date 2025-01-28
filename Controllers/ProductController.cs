@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MyShop.Data;
 using MyShop.Data.Models;
+using MyShop.DTO.ModelsDto;
 
 namespace MyShop.Controllers
 {
@@ -46,6 +47,46 @@ namespace MyShop.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateProduct(ProductModel model) 
+        {
+            if (model == null)
+            {
+                return BadRequest(new { Message = "Invalid product data!" });
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Category))
+            {
+                return BadRequest(new { Message = "Category is required!" });
+            }
+
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == model.Category);
+
+            if (category == null)
+            {
+                return NotFound(new { Message = $"Category '{model.Category}' does not exist!" });
+            }
+
+            var product = new Product
+            {
+                Name = model.Name,
+                Price = model.Price,
+                Description = model.Description,
+                Category = category,
+                CreatedOn = model.CreatedOn
+            };
+
+            try
+            {
+                await _context.Products.AddAsync(product);
+                await _context.SaveChangesAsync();
+                return Ok(new { Message = "Product added successfully!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }  
     }
 }
 
