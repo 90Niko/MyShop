@@ -10,7 +10,7 @@ namespace MyShop.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly MyShopDbContext  _context;
+        private readonly MyShopDbContext _context;
 
         public ProductController(MyShopDbContext context)
         {
@@ -48,7 +48,7 @@ namespace MyShop.Controllers
             }
         }
         [HttpPost("create")]
-        public async Task<IActionResult> CreateProduct(ProductModel model) 
+        public async Task<IActionResult> CreateProduct(ProductModel model)
         {
             if (model == null)
             {
@@ -86,7 +86,30 @@ namespace MyShop.Controllers
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-        }  
+        }
+
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            try
+            {
+                var product = await _context.Products.FindAsync(id);
+
+                if (product == null)
+                {
+                    return NotFound(new { Message = "Product not found in the database." });
+                }
+
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Product deleted successfully!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
 
