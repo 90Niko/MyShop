@@ -23,7 +23,7 @@ namespace MyShop.DTO.ModelsDto
         public string Category { get; set; }= string.Empty;
 
         [Required]
-        public DateTime CreatedOn { get; set; } = DateTime.Now;
+        public DateTime CreatedOn { get; set; }
 
 
     }

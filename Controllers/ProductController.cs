@@ -73,7 +73,8 @@ namespace MyShop.Controllers
                 Price = model.Price,
                 Description = model.Description,
                 Category = category,
-                CreatedOn = model.CreatedOn
+                CreatedOn = DateTime.UtcNow
+
             };
 
             try
@@ -104,6 +105,49 @@ namespace MyShop.Controllers
                 await _context.SaveChangesAsync();
 
                 return Ok(new { Message = "Product deleted successfully!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPut("edit/{id}")]
+        public async Task<IActionResult> EditProduct(int id, ProductModel model)
+        {
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == model.Category);
+
+            if (category == null)
+            {
+                return NotFound(new { Message = $"Category '{model.Category}' does not exist!" });
+            }
+
+            try
+            {
+                // Validate the input model
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { Message = "Invalid data provided." });
+                }
+
+                // Find the existing product in the database
+                var existingProduct = await _context.Products.FindAsync(id);
+                if (existingProduct == null)
+                {
+                    return NotFound(new { Message = "Product not found in the database." });
+                }
+
+                // Update the product properties
+                existingProduct.Name = model.Name;
+                existingProduct.Price = model.Price;
+                existingProduct.Description = model.Description;
+                existingProduct.Category = category;
+               
+                // Save changes to the database
+                _context.Products.Update(existingProduct);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Product updated successfully!" });
             }
             catch (Exception ex)
             {
