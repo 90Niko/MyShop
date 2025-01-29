@@ -11,15 +11,17 @@ namespace MyShop.Controllers
     public class ProductController : ControllerBase
     {
         private readonly MyShopDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public ProductController(MyShopDbContext context)
+        public ProductController(MyShopDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         [HttpGet("getAll")]
         public async Task<ActionResult<IEnumerable<object>>> GetProducts()
-        {
+        { 
             try
             {
                 var products = await _context.Products
@@ -31,6 +33,7 @@ namespace MyShop.Controllers
                         p.Price,
                         p.CreatedOn,
                         p.Description,
+                        p.ImagePath,
                         CategoryName = p.Category != null ? p.Category.Name : "No Category"
                     })
                     .ToListAsync();
@@ -48,46 +51,55 @@ namespace MyShop.Controllers
             }
         }
         [HttpPost("create")]
-        public async Task<IActionResult> CreateProduct(ProductModel model)
+        public async Task<IActionResult> CreateProduct([FromForm] ProductModel createProductDto)
         {
-            if (model == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { Message = "Invalid product data!" });
+                return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrWhiteSpace(model.Category))
+            // Ensure wwwroot exists
+            string uploadsFolder = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            string imagesFolder = Path.Combine(uploadsFolder, "images");
+
+            if (!Directory.Exists(imagesFolder))
             {
-                return BadRequest(new { Message = "Category is required!" });
+                Directory.CreateDirectory(imagesFolder);
             }
 
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == model.Category);
-
-            if (category == null)
+            // Handle image upload
+            string imagePath = null;
+            if (createProductDto.ImageFile != null && createProductDto.ImageFile.Length > 0)
             {
-                return NotFound(new { Message = $"Category '{model.Category}' does not exist!" });
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + createProductDto.ImageFile.FileName;
+                var filePath = Path.Combine(imagesFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await createProductDto.ImageFile.CopyToAsync(fileStream);
+                }
+
+                // ✅ Use full URL for the image
+                imagePath = $"{Request.Scheme}://{Request.Host}/images/{uniqueFileName}";
             }
 
+            // Create the product
             var product = new Product
             {
-                Name = model.Name,
-                Price = model.Price,
-                Description = model.Description,
-                Category = category,
-                CreatedOn = DateTime.UtcNow
-
+                Name = createProductDto.Name,
+                Price = createProductDto.Price,
+                Description = createProductDto.Description,
+                CategoryId = createProductDto.CategoryId,
+                CreatedOn = DateTime.UtcNow,
+                ImagePath = imagePath
             };
 
-            try
-            {
-                await _context.Products.AddAsync(product);
-                await _context.SaveChangesAsync();
-                return Ok(new { Message = "Product added successfully!" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+
+            return Ok(product);
         }
+
 
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
@@ -115,13 +127,6 @@ namespace MyShop.Controllers
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> EditProduct(int id, ProductModel model)
         {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == model.Category);
-
-            if (category == null)
-            {
-                return NotFound(new { Message = $"Category '{model.Category}' does not exist!" });
-            }
-
             try
             {
                 // Validate the input model
@@ -137,12 +142,19 @@ namespace MyShop.Controllers
                     return NotFound(new { Message = "Product not found in the database." });
                 }
 
+                // Validate if the category exists
+                var category = await _context.Categories.FindAsync(model.CategoryId);
+                if (category == null)
+                {
+                    return NotFound(new { Message = $"Category with ID '{model.CategoryId}' does not exist!" });
+                }
+
                 // Update the product properties
                 existingProduct.Name = model.Name;
                 existingProduct.Price = model.Price;
                 existingProduct.Description = model.Description;
-                existingProduct.Category = category;
-               
+                existingProduct.CategoryId = model.CategoryId; // Assuming there is a CategoryId field
+
                 // Save changes to the database
                 _context.Products.Update(existingProduct);
                 await _context.SaveChangesAsync();
@@ -151,9 +163,10 @@ namespace MyShop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return StatusCode(500, new { Message = $"Internal server error: {ex.Message}" });
             }
         }
+
     }
 }
 

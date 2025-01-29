@@ -12,7 +12,7 @@ namespace MyShop.Data
         {
 
         }
-
+      
         public async Task EnsureSeededAsync(IServiceProvider serviceProvider)
         {
             await SeedData.SeedAsync(serviceProvider, this);

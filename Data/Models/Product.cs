@@ -37,5 +37,8 @@ namespace MyShop.Data.Models
         [MaxLength(Constants.Constants.ProductDescriptionMax)]
         [Comment("Description of Product")]
         public string Description { get; set; } = string.Empty;
+
+        [Comment("Image path or URL of the product")]
+        public string? ImagePath { get; set; }
     }
 }

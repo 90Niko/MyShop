@@ -19,11 +19,14 @@ namespace MyShop.DTO.ModelsDto
         [MaxLength(Constants.Constants.ProductDescriptionMax)]
         public string Description { get; set; } = string.Empty;
 
-        [Required]
-        public string Category { get; set; }= string.Empty;
+        public int CategoryId { get; set; }
 
+        public IEnumerable<CategoryModel> Categories { get; set; } = new List<CategoryModel>();
         [Required]
         public DateTime CreatedOn { get; set; }
+
+        public IFormFile? ImageFile { get; set; } // The uploaded image file
+
 
 
     }
