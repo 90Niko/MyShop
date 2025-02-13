@@ -14,6 +14,10 @@ namespace MyShop.Data.Models
         public DateTime OrderDate { get; set; }
 
         [Required]
+        [Comment("Total Price of Order")]
+        public decimal TotalPrice { get; set; }
+
+        [Required]
         [Comment("Customer Name")]
         public string CustomerName { get; set; } = string.Empty;
 
