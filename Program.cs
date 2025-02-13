@@ -15,10 +15,13 @@ namespace MyShop
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddLogging();
+            
 
             // Get the connection string
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+           
             // Configure Entity Framework and Identity
             builder.Services.AddDbContext<MyShopDbContext>(options =>
                 options.UseSqlServer(connectionString));
