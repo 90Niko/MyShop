@@ -1,6 +1,6 @@
 ﻿namespace MyShop.DTO.ModelsDto
 {
-    public class Order
+    public class OrderModel
     {
     }
 }
