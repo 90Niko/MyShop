@@ -24,40 +24,84 @@ namespace MyShop.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CreateMessage([FromBody] MessageModel message, CancellationToken cancellationToken)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (string.IsNullOrWhiteSpace(message.Sender) || string.IsNullOrWhiteSpace(message.Content))
-            {
-                return BadRequest("Sender and Content cannot be empty.");
-            }
-
-            var newMessage = new Message
-            {
-                Sender = message.Sender,
-                Content = message.Content,
-                Timestamp = DateTime.UtcNow
-            };
-
-            await _context.Messages.AddAsync(newMessage, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            return CreatedAtAction(nameof(GetMessages), new { id = newMessage.Id }, newMessage);
-        }
-
-        [HttpGet("getAll")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<object>>> GetMessages(CancellationToken cancellationToken)
+        public async Task<IActionResult> CreateMessage([FromBody] MessageModel messageDto, CancellationToken cancellationToken)
         {
             try
             {
-                var messages = await _context.Messages
+                // Find or create the chat session
+                var chatSession = await _context.ChatSessions
+                    .Include(cs => cs.Messages)
+                    .FirstOrDefaultAsync(cs => cs.UserEmail == messageDto.Sender, cancellationToken);
+
+                if (chatSession == null)
+                {
+                    chatSession = new ChatSession
+                    {
+                        UserEmail = messageDto.Sender,
+                        Messages = new List<Message>()
+                    };
+                    await _context.ChatSessions.AddAsync(chatSession, cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+
+                // Create a new message
+                var message = new Message
+                {
+                    Sender = messageDto.Sender,
+                    Content = messageDto.Content,
+                    Timestamp = DateTime.Now,
+                };
+
+                // Add the message to the chat session
+                chatSession.Messages.Add(message);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                // Map entities to DTOs
+                var chatSessionDto = new ChatSessionModel
+                {
+                    Id = chatSession.Id,
+                    UserEmail = chatSession.UserEmail,
+                    Messages = chatSession.Messages.Select(m => new MessageModel
+                    {
+                        Id = m.Id,
+                        Sender = m.Sender,
+                        Content = m.Content,
+                        Timestamp = m.Timestamp,
+                    }).ToList()
+                };
+
+                // Return the DTOs
+                return Ok(new
+                {
+                    chatSessionId = chatSessionDto.Id,
+                    message = chatSessionDto.Messages.LastOrDefault() // Return the latest message
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating message.");
+                return StatusCode(500, new { error = "Internal server error." });
+            }
+        }
+
+        [HttpGet("getAll/{chatId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<object>>> GetMessagesByChat(int chatId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var chatSession = await _context.ChatSessions
+                    .Include(cs => cs.Messages)
+                    .FirstOrDefaultAsync(cs => cs.Id == chatId, cancellationToken);
+
+                if (chatSession == null)
+                {
+                    return NotFound($"No messages found for chat ID {chatId}.");
+                }
+
+                var messages = chatSession.Messages
                     .Select(m => new
                     {
                         m.Id,
@@ -65,12 +109,7 @@ namespace MyShop.Controllers
                         m.Content,
                         m.Timestamp,
                     })
-                    .ToListAsync(cancellationToken);
-
-                if (!messages.Any())
-                {
-                    return NotFound("No messages found in the database.");
-                }
+                    .ToList();
 
                 return Ok(messages);
             }
@@ -109,6 +148,43 @@ namespace MyShop.Controllers
                 return StatusCode(500, "Internal server error.");
             }
         }
+
+        [HttpGet("getUserChat/{userEmail}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<object>>> GetMessagesByUser(string userEmail, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var chatSession = await _context.ChatSessions
+                    .Include(cs => cs.Messages)
+                    .FirstOrDefaultAsync(cs => cs.UserEmail == userEmail, cancellationToken);
+
+                if (chatSession == null)
+                {
+                    return NotFound($"No chat session found for user {userEmail}.");
+                }
+
+                var messages = chatSession.Messages
+                    .Select(m => new
+                    {
+                        m.Id,
+                        m.Sender,
+                        m.Content,
+                        m.Timestamp,
+                    })
+                    .ToList();
+
+                return Ok(messages);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving messages.");
+                return StatusCode(500, "Internal server error.");
+            }
+        }
+
     }
 }
 

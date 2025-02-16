@@ -178,6 +178,26 @@ namespace MyShop.Migrations
                         });
                 });
 
+            modelBuilder.Entity("MyShop.Data.Models.ChatSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ChatSessions");
+                });
+
             modelBuilder.Entity("MyShop.Data.Models.Message", b =>
                 {
                     b.Property<int>("Id")
@@ -186,6 +206,9 @@ namespace MyShop.Migrations
                         .HasComment("PK of Message");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ChatSessionId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -201,6 +224,8 @@ namespace MyShop.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChatSessionId");
 
                     b.ToTable("Messages");
                 });
@@ -468,6 +493,17 @@ namespace MyShop.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MyShop.Data.Models.Message", b =>
+                {
+                    b.HasOne("MyShop.Data.Models.ChatSession", "ChatSession")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChatSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChatSession");
+                });
+
             modelBuilder.Entity("MyShop.Data.Models.OrderItem", b =>
                 {
                     b.HasOne("MyShop.Data.Models.Order", "Order")
@@ -496,6 +532,11 @@ namespace MyShop.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("MyShop.Data.Models.ChatSession", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("MyShop.Data.Models.Order", b =>

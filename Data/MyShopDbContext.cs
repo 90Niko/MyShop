@@ -24,6 +24,8 @@ namespace MyShop.Data
 
         public DbSet<Message> Messages { get; set; }
 
+        public DbSet<ChatSession> ChatSessions { get; set; }
+
         public DbSet<OrderItem> OrderItems { get; set; }
 
     }

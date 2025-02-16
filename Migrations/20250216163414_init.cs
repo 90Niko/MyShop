@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace MyShop.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,8 +30,8 @@ namespace MyShop.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "First name of the User"),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Last name of the User"),
+                    FirstName = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, comment: "First name of the User"),
+                    LastName = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, comment: "Last name of the User"),
                     Gender = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Gender of the User"),
                     Age = table.Column<int>(type: "int", nullable: false, comment: "Age of the User"),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -68,6 +68,39 @@ namespace MyShop.Migrations
                     table.PrimaryKey("PK_Categories", x => x.Id);
                 },
                 comment: "Category of the Product");
+
+            migrationBuilder.CreateTable(
+                name: "ChatSessions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatSessions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Orders",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false, comment: "PK of Order")
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false, comment: "Date of Order"),
+                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false, comment: "Total Price of Order"),
+                    CustomerName = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Customer Name"),
+                    CustomerAddress = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Customer Address"),
+                    CustomerEmail = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Customer Email"),
+                    CustomerPhone = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Customer Phone"),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Order Status")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Orders", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
@@ -185,7 +218,8 @@ namespace MyShop.Migrations
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false, comment: "Price of Product"),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false, comment: "This is the date the product was created"),
                     CategoryId = table.Column<int>(type: "int", nullable: false, comment: "Product Category identifier"),
-                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false, comment: "Description of Product")
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false, comment: "Description of Product"),
+                    ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true, comment: "Image path or URL of the product")
                 },
                 constraints: table =>
                 {
@@ -198,6 +232,56 @@ namespace MyShop.Migrations
                         onDelete: ReferentialAction.Cascade);
                 },
                 comment: "Product");
+
+            migrationBuilder.CreateTable(
+                name: "Messages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false, comment: "PK of Message")
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Sender = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Sender of Message"),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false, comment: "Receiver of Message"),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ChatSessionId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Messages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Messages_ChatSessions_ChatSessionId",
+                        column: x => x.ChatSessionId,
+                        principalTable: "ChatSessions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    OrderId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -239,6 +323,21 @@ namespace MyShop.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Messages_ChatSessionId",
+                table: "Messages",
+                column: "ChatSessionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_OrderId",
+                table: "OrderItems",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_ProductId",
+                table: "OrderItems",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Products_CategoryId",
                 table: "Products",
                 column: "CategoryId");
@@ -263,13 +362,25 @@ namespace MyShop.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Products");
+                name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "OrderItems");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "ChatSessions");
+
+            migrationBuilder.DropTable(
+                name: "Orders");
+
+            migrationBuilder.DropTable(
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Categories");

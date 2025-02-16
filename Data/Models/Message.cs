@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyShop.Data.Models
 {
@@ -19,5 +20,9 @@ namespace MyShop.Data.Models
 
         [Required]
         public DateTime Timestamp { get; set; }
+
+        [ForeignKey("ChatSession")]
+        public int ChatSessionId { get; set; }
+        public ChatSession ChatSession { get; set; } = null!;
     }
 }
