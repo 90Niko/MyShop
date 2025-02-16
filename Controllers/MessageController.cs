@@ -80,6 +80,35 @@ namespace MyShop.Controllers
                 return StatusCode(500, "Internal server error.");
             }
         }
-    }
 
+        [HttpDelete("delete/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteMessage(int id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Find the message by ID
+                var messageToDelete = await _context.Messages.FindAsync(id, cancellationToken);
+
+                if (messageToDelete == null)
+                {
+                    return NotFound($"Message with ID {id} not found.");
+                }
+
+                // Remove the message from the database
+                _context.Messages.Remove(messageToDelete);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                return NoContent(); // Return 204 No Content on successful deletion
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting message.");
+                return StatusCode(500, "Internal server error.");
+            }
+        }
+    }
 }
+
