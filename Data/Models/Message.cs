@@ -12,11 +12,15 @@ namespace MyShop.Data.Models
 
         [Required]
         [Comment("Sender of Message")]
-        public string Sender { get; set; }=string.Empty;
+        public string Sender { get; set; } = string.Empty;
 
         [Required]
-        [Comment("Receiver of Message")]
-        public string Content { get; set; }= string.Empty;
+        [Comment("Recipient of Message")]
+        public string Recipient { get; set; } = string.Empty; // The user receiving the message
+
+        [Required]
+        [Comment("Content of Message")]
+        public string Content { get; set; } = string.Empty; // Message text
 
         [Required]
         public DateTime Timestamp { get; set; }
@@ -25,4 +29,5 @@ namespace MyShop.Data.Models
         public int ChatSessionId { get; set; }
         public ChatSession ChatSession { get; set; } = null!;
     }
+
 }
