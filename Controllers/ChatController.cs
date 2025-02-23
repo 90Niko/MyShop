@@ -3,6 +3,7 @@ using MyShop.Data;
 using MyShop.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using MyShop.DTO.ModelsDto;
 
 namespace MyShop.Controllers
 {
@@ -50,5 +51,62 @@ namespace MyShop.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        [HttpPost("sendByCurrentChatSesions")]
+        public async Task<ActionResult> SendMessageByCurrentChatSesions([FromBody] SendMessageRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.UserEmail) || string.IsNullOrWhiteSpace(request.Message))
+            {
+                return BadRequest("User email and message cannot be empty.");
+            }
+
+            var chatSession = await _context.ChatSessions
+                .Where(cs => cs.Id == request.ChatSessionId)
+                .FirstOrDefaultAsync();
+
+            if (chatSession == null)
+            {
+                return NotFound("Chat session not found.");
+            }
+
+            var newMessage = new Message
+            {
+                Sender = request.UserEmail,
+                Content = request.Message,
+                IsRead = false,
+                Timestamp = DateTime.Now,
+                ChatSessionId = chatSession.Id
+            };
+
+            _context.Messages.Add(newMessage);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
+        [HttpGet("getAllChatSessions")]
+        public async Task<ActionResult<IEnumerable<ChatSession>>> GetAllChatSessions()
+        {
+            var chatSessions = await _context.ChatSessions
+                .Include(cs => cs.Messages)
+                .Select(cs => new 
+                {
+                    cs.Id,
+                    cs.UserEmail,
+                    cs.CreatedAt,
+                    cs.Messages
+                    
+                })
+                .ToListAsync();
+
+            if (chatSessions == null || chatSessions.Count == 0)
+            {
+                return NotFound("No chat sessions found.");
+            }
+
+            return Ok(chatSessions);
+        }
+
     }
 }
