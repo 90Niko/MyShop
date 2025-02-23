@@ -12,8 +12,8 @@ using MyShop.Data;
 namespace MyShop.Migrations
 {
     [DbContext(typeof(MyShopDbContext))]
-    [Migration("20250216163414_init")]
-    partial class init
+    [Migration("20250223100955_chatSession")]
+    partial class chatSession
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -216,7 +216,11 @@ namespace MyShop.Migrations
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
-                        .HasComment("Receiver of Message");
+                        .HasComment("Content of Message");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit")
+                        .HasComment("Read status of Message");
 
                     b.Property<string>("Sender")
                         .IsRequired()

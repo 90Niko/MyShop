@@ -15,12 +15,12 @@ namespace MyShop.Data.Models
         public string Sender { get; set; } = string.Empty;
 
         [Required]
-        [Comment("Recipient of Message")]
-        public string Recipient { get; set; } = string.Empty; // The user receiving the message
-
-        [Required]
         [Comment("Content of Message")]
         public string Content { get; set; } = string.Empty; // Message text
+
+        [Required]
+        [Comment("Read status of Message")]
+        public bool IsRead { get; set; } = false;
 
         [Required]
         public DateTime Timestamp { get; set; }

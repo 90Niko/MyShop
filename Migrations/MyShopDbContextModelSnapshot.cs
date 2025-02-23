@@ -215,10 +215,9 @@ namespace MyShop.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasComment("Content of Message");
 
-                    b.Property<string>("Recipient")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasComment("Recipient of Message");
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit")
+                        .HasComment("Read status of Message");
 
                     b.Property<string>("Sender")
                         .IsRequired()
