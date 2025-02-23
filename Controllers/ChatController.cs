@@ -108,5 +108,29 @@ namespace MyShop.Controllers
             return Ok(chatSessions);
         }
 
+        [HttpGet("myChatSession")]
+        public async Task<ActionResult<ChatSession>> GetMyChatSession(string userEmail)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                return BadRequest("User email cannot be empty.");
+            }
+            var chatSession = await _context.ChatSessions
+                .Include(cs => cs.Messages)
+                .Where(cs => cs.UserEmail == userEmail)
+                .Select(cs => new
+                {
+                    cs.Id,
+                    cs.UserEmail,
+                    cs.CreatedAt,
+                    cs.Messages
+                })
+                .FirstOrDefaultAsync();
+            if (chatSession == null)
+            {
+                return NotFound("Chat session not found.");
+            }
+            return Ok(chatSession);
+        }
     }
 }
