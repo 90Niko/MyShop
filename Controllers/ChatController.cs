@@ -4,6 +4,8 @@ using MyShop.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using MyShop.DTO.ModelsDto;
+using NuGet.Protocol.Plugins;
+using Message = MyShop.Data.Models.Message;
 
 namespace MyShop.Controllers
 {
@@ -141,6 +143,53 @@ namespace MyShop.Controllers
             }
 
             return Ok(chatSession);
+        }
+
+        [HttpGet("anyIsUnread")]
+        public async Task<ActionResult> AnyIsUnread(string userEmail)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                return BadRequest("User email cannot be empty.");
+            }
+            // Get the current chat session for the provided user email
+            var chatSession = await _context.ChatSessions
+                .Include(cs => cs.Messages)
+                .Where(cs => cs.UserEmail == userEmail)
+                .FirstOrDefaultAsync();
+            if (chatSession == null)
+            {
+                return NotFound("Chat session not found.");
+            }
+            // Check if there are any unread messages in the current chat session
+            var anyIsUnread = chatSession.Messages.Any(m => m.IsRead == false && m.Sender == "Admin");
+            return Ok(anyIsUnread);
+
+        }
+
+        [HttpGet("markAsRead")]
+        public async Task<ActionResult> MarkAsRead(string userEmail)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                return BadRequest("User email cannot be empty.");
+            }
+            // Get the current chat session for the provided user email
+            var chatSession = await _context.ChatSessions
+                .Include(cs => cs.Messages)
+                .Where(cs => cs.UserEmail == userEmail)
+                .FirstOrDefaultAsync();
+            if (chatSession == null)
+            {
+                return NotFound("Chat session not found.");
+            }
+            // Mark all messages as read
+            foreach (var message in chatSession.Messages.Where(m => m.Sender == "Admin"))
+            {
+                message.IsRead = true;
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
     }
