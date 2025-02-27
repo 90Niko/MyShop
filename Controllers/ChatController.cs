@@ -110,6 +110,38 @@ namespace MyShop.Controllers
             return Ok(chatSessions);
         }
 
+        [HttpGet("unReadMessage")]
+        public async Task<ActionResult<IEnumerable<Message>>> GetUnReadMessages()
+        {
+            var messages = await _context.Messages
+                .Where(m => m.IsRead == false && m.Sender!="Admin")
+                .ToListAsync();
+            if (messages == null || messages.Count == 0)
+            {
+                return NotFound("No unread messages found.");
+            }
+            return Ok(new { unreadCount = messages.Count, messages });
+        }
+        [HttpPost("adminMarkAsRead/{id}")]
+        public async Task<ActionResult> AdminMarkAsRead()
+        {
+
+            var messages = await _context.Messages
+                .Where(m => m.IsRead == false && m.Sender != "Admin")
+                .ToListAsync();
+            if (messages == null || messages.Count == 0)
+            {
+                return NotFound("No unread messages found.");
+            }
+            foreach (var message in messages)
+            {
+                message.IsRead = true;
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+
+        }
+
         [HttpGet("myChatSession/{userEmail}")]
         public async Task<ActionResult<ChatSession>> GetMyChatSession(string userEmail)
         {
