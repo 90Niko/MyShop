@@ -92,13 +92,14 @@ namespace MyShop.Controllers
         {
             var chatSessions = await _context.ChatSessions
                 .Include(cs => cs.Messages)
-                .Select(cs => new 
+                .Select(cs => new
                 {
                     cs.Id,
                     cs.UserEmail,
                     cs.CreatedAt,
-                    cs.Messages
-                    
+                    cs.Messages,
+
+
                 })
                 .ToListAsync();
 
@@ -114,32 +115,37 @@ namespace MyShop.Controllers
         public async Task<ActionResult<IEnumerable<Message>>> GetUnReadMessages()
         {
             var messages = await _context.Messages
-                .Where(m => m.IsRead == false && m.Sender!="Admin")
-                .ToListAsync();
-            if (messages == null || messages.Count == 0)
-            {
-                return NotFound("No unread messages found.");
-            }
-            return Ok(new { unreadCount = messages.Count, messages });
-        }
-        [HttpPost("adminMarkAsRead/{id}")]
-        public async Task<ActionResult> AdminMarkAsRead()
-        {
-
-            var messages = await _context.Messages
                 .Where(m => m.IsRead == false && m.Sender != "Admin")
                 .ToListAsync();
-            if (messages == null || messages.Count == 0)
+
+            // If no messages are found, return 200 OK with an empty list and a message
+            return Ok(new { unreadCount = messages.Count, messages = messages.Count > 0 ? messages : new List<Message>(), message = messages.Count == 0 ? "No unread messages found." : null });
+        }
+
+
+        [HttpGet("adminMarkAsRead/{userEmail}")]
+        public async Task<ActionResult> AdminMarkAsRead(string userEmail)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail))
             {
-                return NotFound("No unread messages found.");
+                return BadRequest("User email cannot be empty.");
             }
-            foreach (var message in messages)
+            // Get the current chat session for the provided user email
+            var chatSession = await _context.ChatSessions
+                .Include(cs => cs.Messages)
+                .Where(cs => cs.UserEmail == userEmail)
+                .FirstOrDefaultAsync();
+            if (chatSession == null)
+            {
+                return NotFound("Chat session not found.");
+            }
+            // Mark all messages as read
+            foreach (var message in chatSession.Messages.Where(m => m.Sender != "Admin" && m.IsRead == false))
             {
                 message.IsRead = true;
             }
             await _context.SaveChangesAsync();
             return Ok();
-
         }
 
         [HttpGet("myChatSession/{userEmail}")]
@@ -169,12 +175,24 @@ namespace MyShop.Controllers
                 })
                 .FirstOrDefaultAsync();
 
+            // Return 200 OK with an empty session or a message when no chat session is found
             if (chatSession == null)
             {
-                return NotFound("Chat session not found.");
+                return Ok(new { message = "No chat session found for this user.", chatSession = new ChatSession() });
             }
 
             return Ok(chatSession);
+        }
+
+        [HttpGet("adminUnRead")]
+
+        public async Task<ActionResult<IEnumerable<Message>>> GetAdminUnReadMessages()
+        {
+            var messages = await _context.Messages
+                .Where(m => m.IsRead == false && m.Sender == "Admin")
+                .ToListAsync();
+            // If no messages are found, return 200 OK with an empty list and a message
+            return Ok(new { unreadCount = messages.Count, messages = messages.Count > 0 ? messages : new List<Message>(), message = messages.Count == 0 ? "No unread messages found." : null });
         }
 
         [HttpGet("anyIsUnread")]
@@ -184,19 +202,27 @@ namespace MyShop.Controllers
             {
                 return BadRequest("User email cannot be empty.");
             }
+
+            // If the user is an admin, skip checking chat sessions
+            if (userEmail.EndsWith("@myshop.com")) // or check for user role
+            {
+                return Ok(false); // Admins don't have unread messages
+            }
+
             // Get the current chat session for the provided user email
             var chatSession = await _context.ChatSessions
                 .Include(cs => cs.Messages)
                 .Where(cs => cs.UserEmail == userEmail)
                 .FirstOrDefaultAsync();
+
             if (chatSession == null)
             {
                 return NotFound("Chat session not found.");
             }
+
             // Check if there are any unread messages in the current chat session
             var anyIsUnread = chatSession.Messages.Any(m => m.IsRead == false && m.Sender == "Admin");
             return Ok(anyIsUnread);
-
         }
 
         [HttpGet("markAsRead")]
@@ -206,23 +232,30 @@ namespace MyShop.Controllers
             {
                 return BadRequest("User email cannot be empty.");
             }
+
             // Get the current chat session for the provided user email
             var chatSession = await _context.ChatSessions
                 .Include(cs => cs.Messages)
                 .Where(cs => cs.UserEmail == userEmail)
                 .FirstOrDefaultAsync();
+
+            // If no chat session is found, return a 200 OK response with a message
             if (chatSession == null)
             {
-                return NotFound("Chat session not found.");
+                return Ok(new { message = "No chat session found for this user." });
             }
-            // Mark all messages as read
+
+            // Mark all messages sent by Admin as read
             foreach (var message in chatSession.Messages.Where(m => m.Sender == "Admin"))
             {
                 message.IsRead = true;
             }
+
             await _context.SaveChangesAsync();
-            return Ok();
+
+            return Ok(new { message = "Messages marked as read." });
         }
+
 
     }
 }
