@@ -184,6 +184,20 @@ namespace MyShop.Controllers
             return Ok(chatSession);
         }
 
+        [HttpGet("userUnRead/{userEmail}")]
+        public async Task<ActionResult<IEnumerable<Message>>> GetUserInReadMessages(string userEmail)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                return BadRequest("User email cannot be empty.");
+            }
+            var messages = await _context.Messages
+                .Where(m => m.IsRead == false && m.Sender != "Admin" && m.ChatSession.UserEmail == userEmail)
+                .ToListAsync();
+            // If no messages are found, return 200 OK with an empty list and a message
+            return Ok(new { unreadCount = messages.Count, messages = messages.Count > 0 ? messages : new List<Message>(), message = messages.Count == 0 ? "No unread messages found." : null });
+        }
+
         [HttpGet("adminUnRead")]
 
         public async Task<ActionResult<IEnumerable<Message>>> GetAdminUnReadMessages()
