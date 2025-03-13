@@ -133,10 +133,6 @@ namespace MyShop
                 var serviceProvider = scope.ServiceProvider;
                 var dbContext = serviceProvider.GetRequiredService<MyShopDbContext>();
 
-                // Apply migrations
-
-
-                // Seed the database with roles and users
                 await SeedData.SeedAsync(serviceProvider, dbContext);
             }
 
