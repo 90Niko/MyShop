@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MyShop.Data;
 using MyShop.Data.Models;
 using MyShop.Data.SeedDb;
@@ -29,7 +30,8 @@ namespace MyShop
             builder.Services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<MyShopDbContext>()
                 .AddDefaultTokenProviders();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(e =>
+            e.SwaggerDoc("v1", new OpenApiInfo { Title = "Your API", Version = "v1" }));
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
