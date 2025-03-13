@@ -124,13 +124,7 @@ namespace MyShop
                 });
             });
 
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowSpecificOrigin",
-                    builder => builder.WithOrigins("https://project-defense-vue-js.onrender.com")
-                                      .AllowAnyMethod()
-                                      .AllowAnyHeader());
-            });
+ 
 
             var app = builder.Build();
 
@@ -162,7 +156,7 @@ namespace MyShop
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-                    c.RoutePrefix = string.Empty;
+                    
                 });
             }
 
