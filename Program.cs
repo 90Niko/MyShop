@@ -16,12 +16,12 @@ namespace MyShop
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddLogging();
-            
+
 
             // Get the connection string
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-           
+
             // Configure Entity Framework and Identity
             builder.Services.AddDbContext<MyShopDbContext>(options =>
                 options.UseSqlServer(connectionString));
@@ -29,6 +29,7 @@ namespace MyShop
             builder.Services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<MyShopDbContext>()
                 .AddDefaultTokenProviders();
+            builder.Services.AddSwaggerGen();
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
@@ -121,7 +122,13 @@ namespace MyShop
                 });
             });
 
-            builder.Services.AddCors();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowSpecificOrigin",
+                    builder => builder.WithOrigins("https://project-defense-vue-js.onrender.com")
+                                      .AllowAnyMethod()
+                                      .AllowAnyHeader());
+            });
 
             var app = builder.Build();
 
@@ -153,6 +160,7 @@ namespace MyShop
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                    c.RoutePrefix = string.Empty;
                 });
             }
 
