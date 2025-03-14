@@ -76,7 +76,6 @@ namespace MyShop.Controllers
         }
 
         [HttpGet("user")]
-        [Authorize]
         public async Task<IActionResult> GetCurrentUser()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

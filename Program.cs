@@ -143,8 +143,10 @@ namespace MyShop
                 .WithMethods("GET", "POST", "PUT", "DELETE")
                 .AllowAnyHeader());
 
+           
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.UseDefaultFiles();
             app.UseRouting();
             app.UseStaticFiles();
