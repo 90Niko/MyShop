@@ -140,7 +140,7 @@ namespace MyShop
             app.UseHttpsRedirection();
 
             app.UseCors(policy => policy.WithOrigins("https://project-defense-vue-js.onrender.com")
-                .AllowAnyMethod()
+                .WithMethods("GET", "POST", "PUT", "DELETE")
                 .AllowAnyHeader());
 
             app.UseAuthentication();
