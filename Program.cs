@@ -146,7 +146,7 @@ namespace MyShop
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseStaticFiles();
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
