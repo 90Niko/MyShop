@@ -139,7 +139,7 @@ namespace MyShop
             // Configure Middleware
             app.UseHttpsRedirection();
 
-            app.UseCors(policy => policy.AllowAnyOrigin()
+            app.UseCors(policy => policy.WithOrigins("https://project-defense-vue-js.onrender.com")
                 .AllowAnyMethod()
                 .AllowAnyHeader());
 
@@ -148,7 +148,7 @@ namespace MyShop
             app.UseDefaultFiles();
             app.UseRouting();
             app.UseStaticFiles();
-            if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+            if (app.Environment.IsDevelopment() || app.Environment.IsStaging()|| app.Environment.IsProduction())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
