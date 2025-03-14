@@ -145,6 +145,8 @@ namespace MyShop
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseDefaultFiles();
+            app.UseRouting();
             app.UseStaticFiles();
             if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
             {
@@ -153,6 +155,7 @@ namespace MyShop
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
                     
+
                 });
             }
 
