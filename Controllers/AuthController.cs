@@ -79,6 +79,11 @@ namespace MyShop.Controllers
         public async Task<IActionResult> GetCurrentUser()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
@@ -94,7 +99,7 @@ namespace MyShop.Controllers
                 userId = user.Id,
                 email = user.Email,
                 name = user.UserName,
-                roles
+                roles 
             });
         }
     }

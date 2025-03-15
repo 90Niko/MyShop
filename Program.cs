@@ -108,7 +108,7 @@ namespace MyShop
                     Scheme = "Bearer"
                 });
 
-                c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
                         new OpenApiSecurityScheme
@@ -124,7 +124,7 @@ namespace MyShop
                 });
             });
 
- 
+
 
             var app = builder.Build();
 
@@ -139,24 +139,27 @@ namespace MyShop
             // Configure Middleware
             app.UseHttpsRedirection();
 
-            app.UseCors(policy => policy.WithOrigins("https://project-defense-vue-js.onrender.com")
-                .WithMethods("GET", "POST", "PUT", "DELETE")
-                .AllowAnyHeader());
+            app.UseCors(options =>
+            {
+                options.
+                AllowAnyOrigin().
+                AllowAnyMethod().
+                AllowAnyHeader();
+            });
 
-           
+
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseDefaultFiles();
             app.UseRouting();
             app.UseStaticFiles();
-            if (app.Environment.IsDevelopment() || app.Environment.IsStaging()|| app.Environment.IsProduction())
+            if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-                    c.RoutePrefix = "swagger";
                 });
             }
 
