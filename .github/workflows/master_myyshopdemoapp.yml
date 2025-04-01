@@ -55,4 +55,4 @@ jobs:
           app-name: 'MyyShopDemoApp'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_8E28DD4270094F8DA33427F721D8B749 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_908C81A221744224B8F3C9DF3EA1E62A }}
